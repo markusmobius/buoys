@@ -1,69 +1,112 @@
 import * as THREE from 'three';
 
-var camera, scene, renderer;
-var spheres
-var mesh;
+
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+let camera, controls, scene, renderer;
+      
+      var clock;
+      var sphere;
+      var satellite;
 
 init();
 animate();
 
-function init() {
+function init()
+      {
+          //clock
+          clock = new THREE.Clock();
+          
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color( 0xcccccc );
+  scene.fog = new THREE.FogExp2( 0xcccccc, 0.001 );
 
-renderer = new THREE.WebGLRenderer({canvas: document.querySelector("#canvas")});
+  renderer = new THREE.WebGLRenderer({antialias: true, canvas: document.querySelector("#canvas")});
+  renderer.setPixelRatio( window.devicePixelRatio );
+  renderer.setSize( window.innerWidth, window.innerHeight );
 
-camera = new THREE.PerspectiveCamera(70, 1, 1, 100);
-camera.position.z = 25;
+  camera = new THREE.PerspectiveCamera( 60, window.innerWidth / window.innerHeight, 1, 2000 );
+  camera.position.set( 10, 5, 0 );
 
-scene = new THREE.Scene();
+          // controls
 
-var geometry = new THREE.SphereGeometry(10, 100, 100);
-var material  = new THREE.MeshPhongMaterial();
+          controls = new OrbitControls( camera, renderer.domElement );
+          controls.enableDamping = true; // an animation loop is required when either damping or auto-rotation are enabled
+          controls.dampingFactor = 0.05;
 
-const loader = new THREE.TextureLoader();
-material.map    = loader.load('http://s3-us-west-2.amazonaws.com/s.cdpn.io/1206469/earthmap1k.jpg')
+          controls.maxPolarAngle = Math.PI / 2;
 
-  mesh = new THREE.Mesh(geometry, material);
-  mesh.rotation.x += 0.5;
+          //earth
+          const geometry = new THREE.SphereGeometry( 1, 32, 32 );
+          const material = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: false } );
+          const loader = new THREE.TextureLoader();
+          material.map    = loader.load('http://s3-us-west-2.amazonaws.com/s.cdpn.io/1206469/earthmap1k.jpg')
+          sphere = new THREE.Mesh( geometry, material );
+          scene.add( sphere );
+          
+          
+          
+          //satelite
+          const geometry_satelite = new THREE.BoxGeometry( 0.4, 0.4, 0.4 );
+        const material_satelite = new THREE.MeshNormalMaterial( {  flatShading: true } );
+          satellite = new THREE.Mesh( geometry_satelite, material_satelite );
+          scene.add( satellite );
+          
+          //FLOOR
+          const planeSize = 10;
 
-  // sattelite
- spheres=[];
-  for(var i=0;i<3;i++){
-    var satellite = new THREE.BoxGeometry( 0.8, 0.8, 0.8 );  
-    var satmat = new THREE.MeshNormalMaterial( {  flatShading: true } );
-    //satellite = new THREE.SphereGeometry(1);
-    //satmat = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: false } );
-    var sphere = new THREE.Mesh( satellite , satmat );
-    sphere.position.set(-20,-2+i*2,0);
-    sphere.rotation.x=1;  
-    scene.add(sphere);
-    spheres.push(sphere);
+          const planeGeo = new THREE.PlaneGeometry(planeSize, planeSize);
+          const planeMat = new THREE.MeshPhongMaterial({color : 0XEEEEEE ,side: THREE.DoubleSide});
+          const mesh = new THREE.Mesh(planeGeo, planeMat);
+          mesh.rotation.x = Math.PI/2;
+          mesh.position.y = -1;
+          scene.add(mesh);
+  
+
+  // lights
+
+  const dirLight1 = new THREE.DirectionalLight( 0xffffff );
+  dirLight1.position.set( 1, 1, 1 );
+  scene.add( dirLight1 );
+
+  const dirLight2 = new THREE.DirectionalLight( 0x002288 );
+  dirLight2.position.set( - 1, - 1, - 1 );
+  scene.add( dirLight2 );
+
+  const ambientLight = new THREE.AmbientLight( 0x222222 );
+  scene.add( ambientLight );
+
+  //
+
+  window.addEventListener( 'resize', onWindowResize );
 }
 
-  scene.add(mesh);
-
-  var light1 = new THREE.AmbientLight( 0xffffff );
-  light1.position.set(100, 50, 100);
-  scene.add(light1);
-
-
+function onWindowResize()
+      {
+  camera.aspect = window.innerWidth / window.innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize( window.innerWidth, window.innerHeight );
 }
 
-function resize() {
-  var width = renderer.domElement.clientWidth;
-  var height = renderer.domElement.clientHeight;
-  renderer.setSize(width, height, false);
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix(); 
-}
-
-function animate() {
-  resize();
-  mesh.rotation.y += 0.005;
-  for(var i=0;i<3;i++){
-    spheres[i].position.x =  -20*Math.cos(mesh.rotation.y);
-    spheres[i].position.z = 20*Math.sin(mesh.rotation.y);
-  }
-
-  renderer.render(scene, camera);
-  requestAnimationFrame(animate);
+function animate()
+      {
+          //time tracking
+          var delta = clock.getDelta();
+    var elapsed = clock.elapsedTime;
+          
+          //sphere position
+          sphere.position.x = Math.sin(elapsed/2) * 3;
+          sphere.position.z = Math.cos(elapsed/2) * 3;
+          sphere.rotation.x += 0.4 * delta;
+          sphere.rotation.y += 0.2 * delta;
+          
+          //satellite
+          satellite.position.x =  sphere.position.x + Math.sin(elapsed*2) * 2;
+          satellite.position.z = sphere.position.z + Math.cos(elapsed*2) * 2;
+          satellite.rotation.x += 0.4 * delta;
+          satellite.rotation.y += 0.2 * delta;
+          
+  requestAnimationFrame( animate );
+  controls.update(); // only required if controls.enableDamping = true, or if controls.autoRotate = true
+  renderer.render( scene, camera );
 }
