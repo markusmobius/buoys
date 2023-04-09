@@ -27,13 +27,18 @@ material.map    = loader.load('http://s3-us-west-2.amazonaws.com/s.cdpn.io/12064
 
   // sattelite
  spheres=[];
-  for(var i=0;i<3;i++){
+  for(var i=0;i<8;i++){
     var satellite = new THREE.BoxGeometry( 0.8, 0.8, 0.8 );  
     var satmat = new THREE.MeshNormalMaterial( {  flatShading: true } );
     //satellite = new THREE.SphereGeometry(1);
     //satmat = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: false } );
     var sphere = new THREE.Mesh( satellite , satmat );
-    sphere.position.set(-20,-2+i*2,0);
+    if (i<4){
+      sphere.position.set(-20,-3+i*2,0);
+    }
+    else{
+      sphere.position.set(20,-3+(i-4)*2,0);
+    }
     sphere.rotation.x=1;  
     scene.add(sphere);
     spheres.push(sphere);
@@ -59,9 +64,15 @@ function resize() {
 function animate() {
   resize();
   mesh.rotation.y += 0.005;
-  for(var i=0;i<3;i++){
-    spheres[i].position.x =  -20*Math.cos(mesh.rotation.y);
-    spheres[i].position.z = 20*Math.sin(mesh.rotation.y);
+  for(var i=0;i<8;i++){
+    if (i<4){
+          spheres[i].position.x =  -20*Math.cos(mesh.rotation.y);
+          spheres[i].position.z = 20*Math.sin(mesh.rotation.y);
+    }
+    else{
+          spheres[i].position.x =  20*Math.cos(mesh.rotation.y);
+          spheres[i].position.z = -20*Math.sin(mesh.rotation.y);
+    }
   }
 
   renderer.render(scene, camera);
