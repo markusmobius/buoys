@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 
 var camera, scene, renderer;
-var spheres
+var spheres, lines;
 var mesh;
 
 init();
 animate();
+
+var spacing=0.2;
+var initRot=1;
+var radius=18;
+
 
 function init() {
 
@@ -20,29 +25,32 @@ var geometry = new THREE.SphereGeometry(10, 100, 100);
 var material  = new THREE.MeshPhongMaterial();
 
 const loader = new THREE.TextureLoader();
-material.map    = loader.load('http://s3-us-west-2.amazonaws.com/s.cdpn.io/1206469/earthmap1k.jpg')
+material.map    = loader.load('earthmap1k_jpl.jpg')
 
   mesh = new THREE.Mesh(geometry, material);
-  mesh.rotation.x += 0.5;
+  mesh.rotation.x +=0.5;
+  mesh.rotation.y =0.1;
+  //
 
   // sattelite
  spheres=[];
-  for(var i=0;i<8;i++){
+ lines=[];
+  for(var i=0;i<9;i++){
     var satellite = new THREE.BoxGeometry( 0.8, 0.8, 0.8 );  
     var satmat = new THREE.MeshNormalMaterial( {  flatShading: true } );
     //satellite = new THREE.SphereGeometry(1);
     //satmat = new THREE.MeshPhongMaterial( { color: 0xffffff, flatShading: false } );
     var sphere = new THREE.Mesh( satellite , satmat );
-    if (i<4){
-      sphere.position.set(-20,-3+i*2,0);
-    }
-    else{
-      sphere.position.set(20,-3+(i-4)*2,0);
-    }
+    var x=i % 3;
+    var y=Math.floor(i/3);
+    sphere.position.y=-2.5+y*2.5;
+    sphere.position.x =  -radius*Math.cos(mesh.rotation.y+x*spacing+initRot);
+    sphere.position.z = radius*Math.sin(mesh.rotation.y+x*spacing+initRot);
     sphere.rotation.x=1;  
     scene.add(sphere);
     spheres.push(sphere);
 }
+
 
   scene.add(mesh);
 
@@ -61,19 +69,35 @@ function resize() {
   camera.updateProjectionMatrix(); 
 }
 
+var alternate=1;
 function animate() {
   resize();
   mesh.rotation.y += 0.005;
-  for(var i=0;i<8;i++){
-    if (i<4){
-          spheres[i].position.x =  -20*Math.cos(mesh.rotation.y);
-          spheres[i].position.z = 20*Math.sin(mesh.rotation.y);
-    }
-    else{
-          spheres[i].position.x =  20*Math.cos(mesh.rotation.y);
-          spheres[i].position.z = -20*Math.sin(mesh.rotation.y);
+  for(var i in lines){
+    lines[i].parent.remove(lines[i]);
+  }
+  lines=[];
+  const linemat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+  for(var i=0;i<9;i++){
+    var x=i % 3;
+    var y=Math.floor(i/3);
+    spheres[i].position.x =  -radius*Math.cos((mesh.rotation.y+x*spacing+initRot));
+    spheres[i].position.z = radius*Math.sin((mesh.rotation.y+x*spacing+initRot));
+ 
+    //create a blue LineBasicMaterial
+    if ((alternate % 2) ==1){
+      const points = [];
+      var lx= -9*Math.cos((mesh.rotation.y+initRot+0.1))
+      var lz = 9*Math.sin((mesh.rotation.y+initRot+0.1));
+      points.push( new THREE.Vector3(lx,0.9, lz ) );
+      points.push( new THREE.Vector3(spheres[i].position.x,spheres[i].position.y, spheres[i].position.z) );
+      const lineGeo = new THREE.BufferGeometry().setFromPoints( points );
+      const line = new THREE.Line( lineGeo, linemat );
+      scene.add(line);
+      lines.push(line);  
     }
   }
+  alternate=alternate+1;
 
   renderer.render(scene, camera);
   requestAnimationFrame(animate);
