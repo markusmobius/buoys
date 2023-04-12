@@ -72,7 +72,7 @@ function resize() {
 var alternate=1;
 function animate() {
   resize();
-  mesh.rotation.y += 0.005;
+  mesh.rotation.y += 0.001;
   for(var i in lines){
     lines[i].parent.remove(lines[i]);
   }
