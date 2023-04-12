@@ -77,7 +77,7 @@ function animate() {
     lines[i].parent.remove(lines[i]);
   }
   lines=[];
-  const linemat = new THREE.LineBasicMaterial( { color: 0x0000ff } );
+  const linemat = new THREE.LineBasicMaterial( { color: 0xffffff } );
   for(var i=0;i<9;i++){
     var x=i % 3;
     var y=Math.floor(i/3);
@@ -85,7 +85,7 @@ function animate() {
     spheres[i].position.z = radius*Math.sin((mesh.rotation.y+x*spacing+initRot));
  
     //create a blue LineBasicMaterial
-    if ((alternate % 2) ==1){
+    if ((alternate % 5) ==1){
       const points = [];
       var lx= -9*Math.cos((mesh.rotation.y+initRot+0.1))
       var lz = 9*Math.sin((mesh.rotation.y+initRot+0.1));
